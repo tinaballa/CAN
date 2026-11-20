@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#a4c8fa">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="CAD → Euro">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>CAD → Euro</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#153b83;background:#a4c8fa;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0;padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom);background:#a4c8fa}
+main{max-width:560px;margin:auto;padding:24px 0 32px}
+header{text-align:center;padding:22px 0 24px}
+h1{margin:0;color:#ff3829;font-size:clamp(36px,10vw,56px);font-weight:950;letter-spacing:-2px;line-height:1}
+header p{font-size:12px;font-weight:800;letter-spacing:.08em;margin:10px 0 0}
+.panel{background:#ffede2;border-radius:25px;padding:22px;color:#ff3829}
+.field-label{display:block;font-size:14px;font-weight:850;letter-spacing:.04em;text-transform:uppercase;margin:0 0 8px}
+input[type=number],select{width:100%;min-height:54px;border:1.5px solid #e9d8cf;border-radius:11px;padding:12px 14px;background:#fff9f5;color:#ff3829;font-size:18px}
+input:focus,select:focus,button:focus-visible{outline:3px solid #153b83;outline-offset:2px}
+.money-wrap{position:relative}.money-wrap input{padding-right:85px}.unit{position:absolute;right:14px;top:17px;font-size:14px;font-weight:700}
+.group{margin-top:22px}.choices{display:grid;gap:2px}
+.choice{display:flex;align-items:flex-start;gap:10px;padding:8px 0;color:#ff3829;font-size:15px;line-height:1.35}
+.choice input{width:19px;height:19px;margin:1px 0 0;flex:0 0 auto;accent-color:#ff3829}
+.choice span{flex:1}.rate{font-weight:850;white-space:nowrap}
+.hint{font-size:12px;color:#153b83;line-height:1.45;margin:8px 0 0}
+.result{background:#fff9f5;border-radius:17px;padding:18px;color:#092e80;margin-top:22px}
+.result-title{font-weight:900;font-size:14px}.big{font-weight:950;font-size:clamp(38px,10vw,48px);letter-spacing:-1.5px;margin:7px 0 16px;overflow-wrap:anywhere}
+.details{display:grid;grid-template-columns:1fr 1fr;gap:13px;font-size:13px}.details small{display:block;color:#234986;margin-bottom:3px}.details strong{font-size:14px}
+button{border:0;border-radius:12px;padding:14px 18px;font-weight:900;font-size:15px;min-height:48px}
+.tax-button{background:#fff9f5;color:#ff3829;border:2px solid #ff3829;font-size:20px}
+.tax-button.selected{background:#ff3829;color:#fff}
+.primary{background:#ff3829;color:white;width:100%;margin-top:16px}
+.secondary{background:transparent;border:1px solid #ff3829;color:#ff3829;width:100%;margin-top:10px}
+.status{font-size:12px;color:#153b83;text-align:center;line-height:1.45;margin:14px 4px 0}
+footer{text-align:center;color:#153b83;font-size:12px;font-weight:700;padding:15px}
+@media(min-width:500px){.panel{padding:28px}.choice{font-size:16px}}
+</style>
+</head>
+<body>
+<main>
+<header><h1>CAD → EURO</h1><p>NEWFOUNDLAND SHOPPING CALCULATOR</p></header>
+<section class="panel" aria-label="Einkaufsrechner">
+  <label class="field-label" for="price">Preis in Kanada</label>
+  <div class="money-wrap"><input id="price" type="number" min="0" step="0.01" value="100" inputmode="decimal"><span class="unit">CAD $</span></div>
+
+  <div class="group">
+    <div class="field-label">Steuersatz auswählen</div>
+    <div class="grid grid-cols-3 gap-2" id="tax-buttons">
+      <button type="button" class="tax-button" data-rate="0" aria-pressed="false">0 %</button>
+      <button type="button" class="tax-button" data-rate="5" aria-pressed="false">5 %</button>
+      <button type="button" class="tax-button selected" data-rate="15" aria-pressed="true">15 %</button>
+    </div>
+    <p class="hint">Wähle den Steuersatz passend zu deinem Einkauf. Die Beispiele unten dienen zur Orientierung.</p>
+  </div>
+
+
+  <div class="group">
+    <label class="field-label" for="rate">Wechselkurs</label>
+    <div class="money-wrap"><input id="rate" type="number" min="0.0001" max="10" step="0.0001" inputmode="decimal"><span class="unit">EUR / CAD</span></div>
+    <p class="hint" id="rate-note">Der Kurs wird bei Internetverbindung aktualisiert und für die Offline-Nutzung gespeichert. Du kannst ihn jederzeit ändern.</p>
+  </div>
+
+  <div class="result" aria-live="polite">
+    <div class="result-title">GESAMTPREIS IN EURO</div>
+    <div class="big" id="eur">–</div>
+    <div class="details">
+      <div><small>Warenpreis</small><strong id="base">–</strong></div>
+      <div><small>Steuer (HST)</small><strong id="tax">–</strong></div>
+      <div><small>Gesamt in CAD</small><strong id="total">–</strong></div>
+      <div><small>Steuersatz</small><strong id="percent">–</strong></div>
+    </div>
+  </div>
+  <button class="primary" id="refresh" type="button">WECHSELKURS AKTUALISIEREN</button>
+  <button class="secondary" id="reset" type="button">ZURÜCKSETZEN</button>
+  <p class="status" id="status" role="status">Offline-Berechnung bereit. Für den ersten Start und die Kursaktualisierung Internetverbindung verwenden.</p>
+	
+	 <div class="group" style="border-top:1px solid #e6d5cb;padding-top:18px">
+    <div class="field-label">Beispiele zur Orientierung</div>
+    <div class="space-y-3 text-sm" style="color:#153b83">
+      <div><strong style="color:#ff3829">0 % – steuerfreie Grundnahrungsmittel</strong>
+      <p class="mt-1">Zum Beispiel frisches Obst und Gemüse, Brot, Mehl, Haferflocken, Reis, Nudeln, Tofu, getrocknete Hülsenfrüchte und ungesüßte Kuhmilch.</p></div>
+      <div><strong style="color:#ff3829">5 % – ausgewählte Sonderfälle</strong>
+      <p class="mt-1">Zum Beispiel qualifizierte gedruckte Bücher in Neufundland: Durch den Rabatt auf den provinziellen Steueranteil bleiben 5 % HST. Das gilt nicht pauschal für alle Bücher oder Waren.</p></div>
+      <div><strong style="color:#ff3829">15 % – regulärer HST-Satz</strong>
+      <p class="mt-1">Zum Beispiel Kleidung, Schuhe, Elektronik, Kosmetik, Haushaltswaren, Spielzeug, Restaurantessen, Süßigkeiten, Chips, Softdrinks sowie pflanzliche Milchalternativen wie Hafermilch.</p></div>
+    </div>
+    <p class="hint">Achtung: Die steuerliche Einordnung kann bei einzelnen Produkten von Zutaten, Verpackungsgröße und Verkaufsform abhängen. Im Zweifel gilt die Auszeichnung an der Kasse bzw. die CRA-Regelung.</p>
+  </div>
+	
+</section>
+<footer>CANADA → GERMANY</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const euro=n=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(n);
+const cad=n=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'CAD'}).format(n);
+let rate=Number(localStorage.getItem('cad-eur-rate'))||0.64;
+$('rate').value=rate.toFixed(4);
+function calculate(){
+ const p=Number($('price').value),r=Number($('rate').value);
+ const selected=document.querySelector('.tax-button.selected');
+ if($('price').value===''||$('rate').value===''||!Number.isFinite(p)||p<0||!Number.isFinite(r)||r<=0||r>10||!selected){
+  $('eur').textContent='Eingabe prüfen';['base','tax','total','percent'].forEach(id=>$(id).textContent='–');return;
+ }
+ const pct=Number(selected.dataset.rate),tax=p*pct/100,total=p+tax;
+ $('eur').textContent=euro(total*r);$('base').textContent=cad(p);$('tax').textContent=cad(tax);
+ $('total').textContent=cad(total);$('percent').textContent=pct+' %';
+}
+$('price').addEventListener('input',calculate);
+$('rate').addEventListener('input',()=>{const v=Number($('rate').value);if(v>0&&v<=10){localStorage.setItem('cad-eur-rate',String(v));rate=v;}calculate();});
+document.querySelectorAll('.tax-button').forEach(button=>button.addEventListener('click',()=>{
+ document.querySelectorAll('.tax-button').forEach(b=>{b.classList.remove('selected');b.setAttribute('aria-pressed','false');});
+ button.classList.add('selected');button.setAttribute('aria-pressed','true');calculate();
+}));
+$('reset').addEventListener('click',()=>{$('price').value='100';document.querySelectorAll('.tax-button').forEach(b=>{const active=b.dataset.rate==='15';b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));});calculate();});
+async function updateRate(){
+ if(!navigator.onLine){$('status').textContent='Offline: Der zuletzt gespeicherte Wechselkurs wird verwendet.';return;}
+ $('status').textContent='Wechselkurs wird abgerufen …';
+ try{
+  const response=await fetch('https://api.frankfurter.dev/v1/latest?base=CAD&symbols=EUR',{cache:'no-store'});
+  if(!response.ok)throw new Error('Kursdienst nicht erreichbar');
+  const data=await response.json();const fresh=Number(data.rates.EUR);
+  if(!Number.isFinite(fresh)||fresh<=0)throw new Error('Ungültiger Kurs');
+  rate=fresh;$('rate').value=fresh.toFixed(4);localStorage.setItem('cad-eur-rate',String(fresh));
+  localStorage.setItem('cad-eur-date',data.date||'');calculate();
+  $('status').textContent='Wechselkurs aktualisiert: '+(data.date||'heute')+'. Für Offline-Nutzung gespeichert.';
+ }catch(e){$('status').textContent='Kursaktualisierung nicht möglich. Gespeicherter Kurs wird verwendet.';}
+}
+$('refresh').addEventListener('click',updateRate);
+window.addEventListener('online',updateRate);
+if(navigator.onLine)updateRate();else $('status').textContent='Offline: gespeicherter Wechselkurs wird verwendet.';
+calculate();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}
+</script>
+</body>
+</html>
